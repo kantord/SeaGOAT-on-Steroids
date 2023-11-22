@@ -1,6 +1,7 @@
 #!/bin/env python
 
 import atexit
+from typing import Optional
 import click
 import datetime
 import logging
@@ -60,7 +61,7 @@ completion_tokens = 0
 console = Console()
 
 
-def load_config(config_file: str) -> dict:
+def load_config(config_file: Path) -> dict:
     """
     Read a YAML config file and returns it's content as a dictionary
     """
@@ -91,7 +92,7 @@ def load_history_data(history_file: str) -> dict:
     return content
 
 
-def get_last_save_file() -> str:
+def get_last_save_file() -> Optional[str]:
     """
     Return the timestamp of the last saved session
     """
@@ -100,6 +101,7 @@ def get_last_save_file() -> str:
         ts = [f.replace("chatgpt-session-", "").replace(".json", "") for f in files]
         ts.sort()
         return ts[-1]
+
     return None
 
 
@@ -110,22 +112,25 @@ def create_save_folder() -> None:
     if not os.path.exists(SAVE_FOLDER):
         os.mkdir(SAVE_FOLDER)
 
-def save_history(model: str, messages: list, prompt_tokens: int, completion_tokens: int) -> None:
+
+def save_history(
+    model: str, messages: list, prompt_tokens: int, completion_tokens: int
+) -> None:
     """
     Save the conversation history in JSON format
     """
     with open(os.path.join(SAVE_FOLDER, SAVE_FILE), "w") as f:
-                json.dump(
-                    {
-                        "model": model,
-                        "messages": messages,
-                        "prompt_tokens": prompt_tokens,
-                        "completion_tokens": completion_tokens,
-                    },
-                    f,
-                    indent=4,
-                    ensure_ascii=False,
-                )
+        json.dump(
+            {
+                "model": model,
+                "messages": messages,
+                "prompt_tokens": prompt_tokens,
+                "completion_tokens": completion_tokens,
+            },
+            f,
+            indent=4,
+            ensure_ascii=False,
+        )
 
 
 def add_markdown_system_message() -> None:
@@ -141,7 +146,7 @@ def calculate_expense(
     completion_tokens: int,
     prompt_pricing: float,
     completion_pricing: float,
-) -> float:
+) -> str:
     """
     Calculate the expense, given the number of tokens and the pricing rates
     """
@@ -355,7 +360,7 @@ def main(
 
     logger.info("[bold]ChatGPT CLI", extra={"highlighter": None})
 
-    history = FileHistory(HISTORY_FILE)
+    history = FileHistory(str(HISTORY_FILE))
 
     if multiline:
         session = PromptSession(history=history, multiline=True)

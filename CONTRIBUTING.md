@@ -36,4 +36,4 @@ After the changes are done don't forget to:
 
 ### Formatting
 
-This project uses Black (https://github.com/psf/black) as a code formatter (Most IDE have an extension that makes straightforward to use it). Please format the code using this tool before submitting a PR.
+This project uses Black (<https://github.com/psf/black>) as a code formatter (Most IDE have an extension that makes straightforward to use it). Please format the code using this tool before submitting a PR.
