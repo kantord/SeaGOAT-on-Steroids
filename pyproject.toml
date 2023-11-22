@@ -10,8 +10,8 @@ readme = "README.md"
 packages = [{include = "seagoat_on_steroids"}]
 
 [tool.poetry.scripts]
-seagoat_on_steroids = "seagoat_on_steroids.chatgpt:main"
-sga = "seagoat_on_steroids.chatgpt:main"
+seagoat_on_steroids = "seagoat_on_steroids.assistant:main"
+sga = "seagoat_on_steroids.assistant:main"
 
 [tool.poetry.dependencies]
 certifi = "2022.12.7"
