@@ -1,14 +1,40 @@
-[build-system]
-requires = ["setuptools>=42", "xdg-base-dirs~=6.0.0"]
-build-backend = "setuptools.build_meta"
-
-[project]
-name = "chatgpt-cli"
-version = "0.2.1"
+[tool.poetry]
+name = "seagoat-on-steroids"
+version = "0.1.0"
+description = ""
 authors = [
-    { name = "Marco Lardera", email = "larderamarco@hotmail.com" }
+  "Daniel Kantor <git@daniel-kantor.com>",
+  "Marco Lardera <larderamarco@hotmail.com>",
 ]
-description = "Simple yet effective command line client for chatting with ChatGPT using the official API." 
 readme = "README.md"
+packages = [{include = "seagoat_on_steroids"}]
 
-requires-python = ">=3.10"
+[tool.poetry.dependencies]
+python = "^3.11"
+certifi = "2022.12.7"
+charset-normalizer = "3.0.1"
+click = "8.1.3"
+idna = "3.4"
+markdown-it-py = "2.2.0"
+mdurl = "0.1.2"
+mypy-extensions = "1.0.0"
+pathspec = "0.11.0"
+platformdirs = "3.1.0"
+prompt-toolkit = "3.0.38"
+pygments = "2.14.0"
+pyyaml = ">=6.0,<6.1"
+requests = "2.28.2"
+rich = "13.4.0"
+tomli = "2.0.1"
+typing-extensions = "4.6.2"
+urllib3 = "1.26.14"
+wcwidth = "0.2.6"
+xdg-base-dirs = ">=6.0.0,<6.1.0"
+
+
+[tool.poetry.group.dev.dependencies]
+black = "^23.11.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
