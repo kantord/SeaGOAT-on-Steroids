@@ -12,6 +12,8 @@ import yaml
 import json
 
 from pathlib import Path
+from seagoat.utils.server import get_server_info  # type: ignore
+from seagoat.cli import query_server, rewrite_full_paths_to_use_local_path  # type: ignore
 from prompt_toolkit import PromptSession, HTML
 from prompt_toolkit.history import FileHistory
 from rich.console import Console
@@ -187,7 +189,36 @@ def display_expense(model: str) -> None:
         )
 
 
-def start_prompt(session: PromptSession, config: dict) -> None:
+def get_context_from_seagoat(seagoat_address: str, message: str, repo: str) -> str:
+    seagoat_results = query_server(
+        message,
+        seagoat_address,
+        max_results=50,
+        context_above=5,
+        context_below=5,
+    )
+    seagoat_results = rewrite_full_paths_to_use_local_path(repo, seagoat_results)
+
+    result_lines = []
+
+    for result in seagoat_results:
+        for block in result["blocks"]:
+            first_line_number = block["lines"][0]["line"]  # type: ignore
+            last_line_number = block["lines"][-1]["line"]  # type: ignore
+            result_lines.append(f"File: {result['path']}")
+            result_lines.append(f"Lines: {first_line_number}-{last_line_number}")
+            result_lines.append("")
+            result_lines.append("```")
+            for line in block["lines"]:  # type: ignore
+                result_lines.append(line["lineText"])  # type: ignore
+            result_lines.append("```")
+
+    return "\n".join(result_lines)
+
+
+def start_prompt(
+    session: PromptSession, config: dict, seagoat_address: str, repo: str
+) -> None:
     """
     Ask the user for input, build the request and perform it
     """
@@ -208,6 +239,15 @@ def start_prompt(session: PromptSession, config: dict) -> None:
         message = session.prompt(
             HTML(f"<b>[{prompt_tokens + completion_tokens}] >>> </b>")
         )
+
+    context_from_seagoat = get_context_from_seagoat(seagoat_address, message, repo)
+    message = f"""Answer the users query with the following code snippets from their code repository as your context:
+{context_from_seagoat}
+====
+Keep in mind that you only need to use this context if it's actually relevant to the context.
+Feel free to mention different options, and if possible mention even the code line numbers.
+Finally, this is the actual user query that you have to answer: "{message}"
+    """
 
     if message.lower() == "/q":
         raise EOFError
@@ -351,9 +391,12 @@ def start_prompt(session: PromptSession, config: dict) -> None:
 @click.option(
     "-j", "--json", "json_mode", is_flag=True, help="Activate json response mode"
 )
+@click.argument("repo", type=click.Path(exists=True), default=os.getcwd())
 def main(
-    context, api_key, model, multiline, restore, non_interactive, json_mode
+    context, api_key, model, multiline, restore, non_interactive, json_mode, repo
 ) -> None:
+    seagoat_server_info = get_server_info(repo)
+    seagoat_address = seagoat_server_info["address"]
     # If non interactive suppress the logging messages
     if non_interactive:
         logger.setLevel("ERROR")
@@ -454,7 +497,7 @@ def main(
 
     while True:
         try:
-            start_prompt(session, config)
+            start_prompt(session, config, seagoat_address, repo)
         except KeyboardInterrupt:
             continue
         except EOFError:
