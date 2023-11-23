@@ -19,9 +19,10 @@ from prompt_toolkit.history import FileHistory
 from rich.console import Console
 from rich.logging import RichHandler
 from rich.markdown import Markdown
+from halo import Halo
 from xdg_base_dirs import xdg_config_home
 
-BASE = Path(xdg_config_home(), "chatgpt-cli")
+BASE = Path(xdg_config_home(), "seagoat-on-steroids")
 CONFIG_FILE = BASE / "config.yaml"
 HISTORY_FILE = BASE / "history"
 SAVE_FOLDER = BASE / "session-history"
@@ -71,7 +72,7 @@ def load_config(config_file: Path) -> dict:
         config_file.parent.mkdir(parents=True, exist_ok=True)
         with open(config_file, "w") as file:
             file.write(
-                'api-key: "INSERT API KEY HERE"\n' + 'model: "gpt-3.5-turbo"\n'
+                'api-key: "INSERT API KEY HERE"\n' + 'model: "gpt-3.5-turbo-16k"\n'
                 "temperature: 1\n"
                 "#max_tokens: 500\n"
                 "markdown: true\n"
@@ -193,9 +194,9 @@ def get_context_from_seagoat(seagoat_address: str, message: str, repo: str) -> s
     seagoat_results = query_server(
         message,
         seagoat_address,
-        max_results=50,
-        context_above=5,
-        context_below=5,
+        max_results=75,
+        context_above=3,
+        context_below=3,
     )
     seagoat_results = rewrite_full_paths_to_use_local_path(repo, seagoat_results)
 
@@ -268,22 +269,23 @@ Finally, this is the actual user query that you have to answer: "{message}"
     if config["json_mode"]:
         body["response_format"] = {"type": "json_object"}
 
-    try:
-        r = requests.post(
-            f"{BASE_ENDPOINT}/chat/completions", headers=headers, json=body
-        )
-    except requests.ConnectionError:
-        logger.error(
-            "[red bold]Connection error, try again...", extra={"highlighter": None}
-        )
-        messages.pop()
-        raise KeyboardInterrupt
-    except requests.Timeout:
-        logger.error(
-            "[red bold]Connection timed out, try again...", extra={"highlighter": None}
-        )
-        messages.pop()
-        raise KeyboardInterrupt
+    with Halo(text="Thinking", spinner="dots"):
+        try:
+            r = requests.post(
+                f"{BASE_ENDPOINT}/chat/completions", headers=headers, json=body
+            )
+        except requests.ConnectionError:
+            logger.error(
+                "[red bold]Connection error, try again...", extra={"highlighter": None}
+            )
+            messages.pop()
+            raise KeyboardInterrupt
+        except requests.Timeout:
+            logger.error(
+                "[red bold]Connection timed out, try again...", extra={"highlighter": None}
+            )
+            messages.pop()
+            raise KeyboardInterrupt
 
     match r.status_code:
         case 200:
